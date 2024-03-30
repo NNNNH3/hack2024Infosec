@@ -1,22 +1,25 @@
-import kivy
-from kivy.app import App
+
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
-from kivy.graphics import Color, Rectangle
 from kivy.uix.spinner import Spinner
 from kivy.lang import Builder
+from kivymd.app import MDApp
 import sqlite3
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.gridlayout import GridLayout
 from kivy.core.window import Window
 import uuid
+
+from kivy.lang import Builder
+import json
+Builder.load_file("hack.kv")
 conn = sqlite3.connect('DBCVE.db')
 cursor = conn.cursor()
-
-log_people = [""]
-cursor.execute("SELECT Компонент FROM CVE")
-components = [row[0] for row in cursor.fetchall()]
+counter = 1
+log_people = []
 conn2 = sqlite3.connect('users.db')
 cursor2 = conn2.cursor()
 cursor2.execute('''
@@ -27,14 +30,14 @@ cursor2.execute('''
         password TEXT
     );
 ''')
+with open('channel_posts1.json', 'r', encoding='utf-8') as file:
+    data = json.load(file)
+    components = [entry['component'] for entry in data]
+
 Window.fullscreen = 'auto'
 class First_Page(Screen):
     def __init__(self,**kwargs):
         super(First_Page,self).__init__(**kwargs)
-        self.reg_button = Button(text="Регистрация",size_hint=(None, None), size=(200, 100),pos_hint={"center_x": 0.9, "center_y": 0.95},on_press=self.swap_on_reg)
-        self.sign_in = Button(text="войти",size_hint=(None, None), size=(200, 100),pos_hint={"center_x": 0.78, "center_y": 0.95},on_press=self.swap_on_sign_in)
-        self.add_widget(self.reg_button)
-        self.add_widget(self.sign_in)
     def swap_on_reg(self,*args):
         self.manager.current = 'register'
     def swap_on_sign_in(self,*args):
@@ -68,7 +71,7 @@ class RegisterScreen(Screen):
         conn2.commit()
         conn2.close()
 
-        self.second_button_press = Button(text='Перейти на второй экран',size_hint=(None, None), size=(200, 100), on_press=self.swap_on_main_screen)
+        self.second_button_press = Button(text='Перейти в главное меню',size_hint=(None, None), size=(200, 100), on_press=self.swap_on_main_screen)
         self.add_widget(self.second_button_press)
         self.res_name = (self.username_input).text
         self.res_email = (self.email_input).text
@@ -102,7 +105,7 @@ class Sign_In(Screen):
         user = cursor.fetchone()
         print(user)
         print(type(user))
-        if user ==None:
+        if user == None:
             self.error_pass_or_email = Label(text="Что-то введено неверно", pos_hint={"center_x": 0.5, "center_y": 0.4})
             self.add_widget(self.error_pass_or_email)
             self.gig()
@@ -125,7 +128,7 @@ class Main_Project(Screen):
     def __init__(self, **kwargs):
         super(Main_Project, self).__init__(**kwargs)
         self.orientation = 'vertical'
-        self.layout = BoxLayout(orientation='vertical')
+        self.layout = BoxLayout(orientation='vertical',size_hint=(None, None), size=(200, 100),pos_hint={"center_x": 0.1, "center_y": 0.1})
         self.create_component_spinner()
         self.create_add_component_button()
         self.create_project_button()
@@ -139,11 +142,17 @@ class Main_Project(Screen):
         self.add_widget(self.project_name)
         self.add_component_spinner()
     def add_component_spinner(self, *args):
-        component_spinner = Spinner(text='Выберите компонент', values=(components),size_hint=(None, None), size=(200, 100),pos_hint={"center_x": 0.1, "center_y": 0.9})
+        component_spinner = Spinner(text='Выберите компонент', values=(components),size_hint=(None, None), size=(200, 100))
         self.component_spinners_layout.add_widget(component_spinner)
 
     def create_add_component_button(self):
         add_component_button = Button(text='Добавить компонент', size_hint=(None, None), size=(200, 100),
+                                  pos_hint={"center_x": 0.9, "center_y": 0.1})
+        add_component_button.bind(on_press=self.add_component_spinner)
+        self.add_widget(add_component_button)
+    def create_add_people_button(self):
+        add_colab = TextInput(text='введите название проекта', multiline=False,size_hint=(None, None), size=(200, 100),pos_hint={"center_x": 0.4, "center_y": 0.5})
+        add_component_button = Button(text='Добавить колаборатора', size_hint=(None, None), size=(200, 100),
                                   pos_hint={"center_x": 0.9, "center_y": 0.1})
         add_component_button.bind(on_press=self.add_component_spinner)
         self.add_widget(add_component_button)
@@ -162,7 +171,7 @@ class Main_Project(Screen):
         for component_spinner in self.component_spinners_layout.children:
             self.components.append(component_spinner.text)
         cursor.execute('''CREATE TABLE IF NOT EXISTS my_table
-                        (id TEXT, variable TEXT, login TEXT, my_array TEXT)''')
+                        (num TEXT,id TEXT, variable TEXT, login TEXT, my_array TEXT)''')
         unique_id = str(uuid.uuid4())
         my_variable = self.name_prod
         my_login = str(log_people)
@@ -171,22 +180,169 @@ class Main_Project(Screen):
                        (unique_id, my_variable, my_login, str(my_array)))
         conn.commit()
         conn.close()
-
+        self.cve_create()
+    def cve_create(self):
+        components = self.components
+        print(components)
+        cve_threats = []
+        with open('channel_posts1.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        for component in components:
+            for record in data:
+                if record['component'] == component:
+                    for threat in record['угроза']:
+                        if "CVE" in threat:
+                            cve_threats.append(threat)
+        print(cve_threats)
+        self.cve_mass = Label(text=str(cve_threats),pos_hint={"center_x": 0.5, "center_y": 0.65})
+        self.add_widget(self.cve_mass)
 
 
 
 class MainPage(Screen):
     def __init__(self,**kwargs):
         super(MainPage, self).__init__(**kwargs)
-        self.text_main= Label(text='Мэин')
+        global log_people
+        self.kent = log_people
+        self.res()
+    def res(self,*args):
+        self.counter = 1
+        conn = sqlite3.connect('mydatabase.db')
+        cursor = conn.cursor()
+        query = "SELECT variable FROM my_table WHERE login LIKE ?"
+        cursor.execute(query, (f'%{self.kent}%',))
+        projects = [row[0] for row in cursor.fetchall()]
+        print(projects)
+        conn.close()
+        layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
+        layout.bind(minimum_height=layout.setter('height'))
+        # Добавляем кнопки для каждого проекта
+        for self.project in projects:
+            self.btn_text = Button(text=str(self.project), size_hint_y=None, height=40, on_press=self.pointer_page)
+            layout.add_widget(self.btn_text)
+            self.counter = self.counter + 1
+        self.root = ScrollView(size_hint=(0.3, 0.7))
+        self.root.add_widget(layout)
+        self.add_widget(self.root)
+        self.projects()
+    def projects(self):
+        self.text_main = Label(text='Мэин')
+        self.project_page = Button(text='создать проект', on_press=self.swap_on_project, size_hint=(None, None),
+                                   size=(200, 100), pos_hint={"center_x": 0.1, "center_y": 0.95})
+        self.notifications = Button(text='уведомления', on_press=self.swap_on_notifications, size_hint=(None, None),
+                                    size=(200, 100), pos_hint={"center_x": 0.3, "center_y": 0.95})
+        self.export = Button(text='выгрузка', on_press=self.swap_on_project, size_hint=(None, None), size=(200, 100),
+                             pos_hint={"center_x": 0.5, "center_y": 0.95})
+        self.proj = Button(text='окно проектов', on_press=self.res, size_hint=(None, None), size=(200, 100),
+                             pos_hint={"center_x": 0.7, "center_y": 0.95})
         self.add_widget(self.text_main)
-        self.cont_page = Button(text='создрать проект',on_press=self.swap_on_project)
-        self.add_widget(self.cont_page)
+        self.add_widget(self.project_page)
+        self.add_widget(self.notifications)
+        self.add_widget(self.export)
+        self.add_widget(self.proj)
+
+    def pointer_page(self,*args):
+        self.remove_widget(self.root)
+        self.remove_widget(self.text_main)
+        self.remove_widget(self.project_page)
+        self.remove_widget(self.notifications)
+        self.remove_widget(self.export)
+        print(self.counter)
+
 
     def swap_on_project(self,*args):
         self.manager.current = "project"
+    def swap_on_notifications(self,*args):
+        self.manager.current = "notif"
+    def swap_on_export(self,*args):
+        pass
+class Notifications(Screen):
+    def __init__(self,**kwargs):
+        super(Notifications, self).__init__(**kwargs)
+        mass_cve_name=[]
+        mass_cve_kol = []
+        with open('channel_posts (1).json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
 
-class RegisterApp(App):
+        # Триггер-слово, которое мы будем искать в тексте
+        trigger_words = components
+
+        # Массив для записи id, если найдено триггер-слово в тексте
+        triggered_word_ids = {word: [] for word in trigger_words}
+
+        # Поиск триггер-слова в тексте и запись идентификаторов, если найдено совпадение
+        for item in data:
+            for words in trigger_words:
+                if words in item['text']:
+                    triggered_word_ids[words].append(item['id'])
+
+                    # Вывод найденных id для каждого триггер-слова
+        for word, ids in triggered_word_ids.items():
+            print(f'Для триггер-слова "{word}" найдены ID: {ids}')
+            length = len(triggered_word_ids[word])
+            name = list(triggered_word_ids.keys())
+            mass_cve_kol.append(length)
+            mass_cve_name.append(name)
+        print(mass_cve_kol)
+        flat_list = mass_cve_name[0]
+        print(flat_list)
+        print(triggered_word_ids)
+        self.trigger_words = triggered_word_ids
+        conn = sqlite3.connect('info_new_old.db')
+        cursor = conn.cursor()
+        for i, value in enumerate(mass_cve_kol, start=1):
+            cursor.execute("UPDATE mytable SET New_Year = ? WHERE RowID = ?", (value, i))
+        conn.commit()
+        conn.close()
+        self.new_data()
+    def new_data(self):
+        mass_ib = []
+
+        conn = sqlite3.connect('info_new_old.db')
+        cursor = conn.cursor()
+        # Извлечение данных из третьего и второго столбцов таблицы
+        cursor.execute('SELECT New_Year, Year FROM mytable')
+        rows = cursor.fetchall()
+        # Извлечение значений и вычитание их
+        results = []
+        for row in rows:
+            result = row[0] - row[1]
+            results.append(result)
+        # Закрытие соединения
+        print(results)
+        conn.close()
+
+        # Перебор ключей и значений в словаре, чтобы найти первое соответствие
+        for key, value in self.trigger_words.items():
+            length = min(len(value), results.pop(0))
+            self.trigger_words[key] = value[:length]
+        print("епта")
+        print(self.trigger_words)
+        self.values_array = [value for values in self.trigger_words.values() for value in values]
+        with open('channel_posts (1).json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        results = []
+        # Поиск совпадения по id
+        for item in data:
+            if item['id'] in self.values_array:
+                # Извлечение текста до первой точки
+                text = item['text']
+                first_sentence = text.split('.')[0]
+
+                # Поиск CVE в тексте
+                cve_start = text.find('CVE-')
+                cve = text[cve_start: text.find('`', cve_start)]
+                result = {
+                    'id': item['id'],
+                    'first_sentence': first_sentence,
+                    'CVE': cve
+                }
+                results.append(result)
+        print(results)
+        self.cabinet()
+    def cabinet(self):
+        pass
+class RegisterApp(MDApp):
     def build(self):
         self.sm = ScreenManager()
         screen1 = First_Page(name='first')
@@ -194,11 +350,13 @@ class RegisterApp(App):
         screen3 = MainPage(name="main")
         screen4 = Main_Project(name = "project")
         screen5 = Sign_In(name="sign_in")
+        screen6 =Notifications(name = "notif")
         self.sm.add_widget(screen1)
         self.sm.add_widget(screen2)
         self.sm.add_widget(screen3)
         self.sm.add_widget(screen4)
         self.sm.add_widget(screen5)
+        self.sm.add_widget(screen6)
         return self.sm
 
 if __name__ == '__main__':
