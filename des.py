@@ -579,9 +579,6 @@ class Notifications(Screen):
         print(results)
         self.kris_label=results
     def cabinet(self,*args):
-        self.back = Button(text="назад",size_hint=(None, None), size=(200, 100),
-                             pos_hint={"center_x": 0.9, "center_y": 0.95},on_press =self.back)
-        self.add_widget(self.back)
         layout = GridLayout(cols=1,spacing=100, size_hint_y=None)
         layout.bind(minimum_height=layout.setter('height'))
         for item in self.kris_label:
