@@ -389,9 +389,14 @@ class Main_Project(Screen):
                     for threat in record['угроза']:
                         if "CVE" in threat:
                             cve_threats.append(threat)
+        cve_text = str(cve_threats)
         print(cve_threats)
-        self.cve_mass = Label(text=str(cve_threats),pos_hint={"center_x": 0.5, "center_y": 0.65})
+        self.cve_mass = Label(pos_hint={"center_x": 0.5, "center_y": 0.65},size_hint_y=None)
+        self.cve_mass.text = cve_text
+        self.cve_mass.bind(size=self.adjust_text_size)
         self.add_widget(self.cve_mass)
+    def adjust_text_size(self, instance, size):
+        instance.text_size = size
 
 
 
