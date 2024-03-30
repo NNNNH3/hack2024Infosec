@@ -264,19 +264,15 @@ class Notifications(Screen):
         with open('channel_posts (1).json', 'r', encoding='utf-8') as file:
             data = json.load(file)
 
-        # Триггер-слово, которое мы будем искать в тексте
         trigger_words = components
 
-        # Массив для записи id, если найдено триггер-слово в тексте
         triggered_word_ids = {word: [] for word in trigger_words}
 
-        # Поиск триггер-слова в тексте и запись идентификаторов, если найдено совпадение
         for item in data:
             for words in trigger_words:
                 if words in item['text']:
                     triggered_word_ids[words].append(item['id'])
 
-                    # Вывод найденных id для каждого триггер-слова
         for word, ids in triggered_word_ids.items():
             print(f'Для триггер-слова "{word}" найдены ID: {ids}')
             length = len(triggered_word_ids[word])
@@ -300,19 +296,18 @@ class Notifications(Screen):
 
         conn = sqlite3.connect('info_new_old.db')
         cursor = conn.cursor()
-        # Извлечение данных из третьего и второго столбцов таблицы
         cursor.execute('SELECT New_Year, Year FROM mytable')
         rows = cursor.fetchall()
-        # Извлечение значений и вычитание их
+
         results = []
         for row in rows:
             result = row[0] - row[1]
             results.append(result)
-        # Закрытие соединения
+
         print(results)
         conn.close()
 
-        # Перебор ключей и значений в словаре, чтобы найти первое соответствие
+
         for key, value in self.trigger_words.items():
             length = min(len(value), results.pop(0))
             self.trigger_words[key] = value[:length]
@@ -322,7 +317,7 @@ class Notifications(Screen):
         with open('channel_posts (1).json', 'r', encoding='utf-8') as file:
             data = json.load(file)
         results = []
-        # Поиск совпадения по id
+
         for item in data:
             if item['id'] in self.values_array:
                 # Извлечение текста до первой точки
