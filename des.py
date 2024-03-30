@@ -329,6 +329,14 @@ class Main_Project(Screen):
         self.create_add_component_button()
         self.create_project_button()
         self.add_widget(self.layout)
+        self.back = Button(text="назад", size_hint=(None, None), size=(200, 100),
+                           pos_hint={"center_x": 0.75, "center_y": 0.95}, on_press=self.swap_on_project)
+
+        self.add_widget(self.back)
+
+
+    def swap_on_project(self, *args):
+        self.manager.current = 'main'
 
     def create_component_spinner(self):
         self.component_spinners_layout = BoxLayout(orientation='vertical')
@@ -450,7 +458,6 @@ class MainPage(Screen):
         self.remove_widget(self.export)
         print(self.counter)
 
-
     def swap_on_project(self,*args):
         self.manager.current = "project"
     def swap_on_notifications(self,*args):
@@ -519,9 +526,14 @@ class Notifications(Screen):
         conn.close()
         self.button_res = Button(text="новости",size_hint=(None, None), size=(200, 100),
                              pos_hint={"center_x": 0.5, "center_y": 0.95},on_press=self.cabinet)
+        self.back = Button(text="назад",size_hint=(None, None), size=(200, 100),
+                             pos_hint={"center_x": 0.9, "center_y": 0.95},on_press =self.swap_on_project)
+
+        self.add_widget(self.back)
         self.add_widget(self.button_res)
         self.new_data()
-
+    def swap_on_project(self,*args):
+        self.manager.current = 'main'
     def new_data(self):
         mass_ib = []
         conn = sqlite3.connect('info_new_old.db')
@@ -567,6 +579,9 @@ class Notifications(Screen):
         print(results)
         self.kris_label=results
     def cabinet(self,*args):
+        self.back = Button(text="назад",size_hint=(None, None), size=(200, 100),
+                             pos_hint={"center_x": 0.9, "center_y": 0.95},on_press =self.back)
+        self.add_widget(self.back)
         layout = GridLayout(cols=1,spacing=100, size_hint_y=None)
         layout.bind(minimum_height=layout.setter('height'))
         for item in self.kris_label:
@@ -577,7 +592,8 @@ class Notifications(Screen):
         self.root = ScrollView(size_hint=(1, 0.7))
         self.root.add_widget(layout)
         self.add_widget(self.root)
-
+    def back(self,*args):
+        self.manager.current = "main"
     def open_user_db(self, instance):
         self.manager.current = 'admin_user_db'
 
@@ -586,18 +602,18 @@ class Notifications(Screen):
 class RegisterApp(MDApp):
     def build(self):
         self.sm = ScreenManager()
-        screen1 = First_Page(name='first')
-        screen2 =RegisterScreen(name='register')
-        screen3 = MainPage(name="main")
-        screen4 = Main_Project(name = "project")
-        screen5 = Sign_In(name="sign_in")
-        screen6 =Notifications(name = "notif")
-        self.sm.add_widget(screen1)
-        self.sm.add_widget(screen2)
-        self.sm.add_widget(screen3)
-        self.sm.add_widget(screen4)
-        self.sm.add_widget(screen5)
-        self.sm.add_widget(screen6)
+        self.screen1 = First_Page(name='first')
+        self.screen2 =RegisterScreen(name='register')
+        self.screen3 = MainPage(name="main")
+        self.screen4 = Main_Project(name = "project")
+        self.screen5 = Sign_In(name="sign_in")
+        self.screen6 =Notifications(name = "notif")
+        self.sm.add_widget(self.screen1)
+        self.sm.add_widget(self.screen2)
+        self.sm.add_widget(self.screen3)
+        self.sm.add_widget(self.screen4)
+        self.sm.add_widget(self.screen5)
+        self.sm.add_widget(self.screen6)
         self.sm.add_widget(AdminUserDB(name='admin_user_db'))
         self.sm.add_widget(AdminVulnerabilitiesDB(name='admin_vulnerabilities_db'))
         return self.sm
