@@ -464,9 +464,9 @@ class MainPage(Screen):
         self.manager.current = "notif"
     def swap_on_export(self,*args):
         #просьба не пользоваться это функцией,банит тг акк
-        api_id = 25077304
-        api_hash = 'd5910dcb114e1128c382e667b11bc322'
-        phone_number = '+79876281060'
+        api_id = #ID 
+        api_hash = '#HASH'
+        phone_number = '#NUMBER'
 
         # Создаем клиента Telegram
         client = TelegramClient('session_name', api_id, api_hash)
@@ -474,7 +474,7 @@ class MainPage(Screen):
         async def main():
             client.start(phone_number)
 
-            channel_username = 'https://t.me/bdufstecru'
+            channel_username = '#ссылка на тг канал'
             channel_entity = await client.get_entity(channel_username)
             posts = []
             async for message in client.iter_messages(channel_entity):
